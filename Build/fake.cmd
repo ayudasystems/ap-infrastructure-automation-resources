@@ -1,7 +1,7 @@
 @echo off
 
-REM set build number to local if not specified
 if [%BUILD_NUMBER%] EQU [] SET BUILD_NUMBER=local
+if [%DEPLOYMENT_SLOT%] EQU [] SET DEPLOYMENT_SLOT=CI
 
 SET BUILD_TOOLS_DIR=%~dp0.build
 mkdir "%BUILD_TOOLS_DIR%"
