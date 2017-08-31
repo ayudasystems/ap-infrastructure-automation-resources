@@ -1,5 +1,9 @@
 @echo off
 
+IF "%~1"=="deploymentSlot" (
+	SET DEPLOYMENT_SLOT=%2
+)
+
 if [%BUILD_NUMBER%] EQU [] SET BUILD_NUMBER=local
 if [%DEPLOYMENT_SLOT%] EQU [] SET DEPLOYMENT_SLOT=CI
 
