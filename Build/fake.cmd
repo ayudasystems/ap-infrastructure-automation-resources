@@ -1,11 +1,17 @@
 @echo off
 
-IF "%~1"=="deploymentSlot" (
-	SET DEPLOYMENT_SLOT=%2
-)
+REM Convert params to Environment Variables
+:loop
+IF "%~1"=="" GOTO cont
+SET %~1=%~2
+@echo Env Variable "%~1" set to "%~2"
+SHIFT & SHIFT & GOTO loop
+:cont
+
 
 if [%BUILD_NUMBER%] EQU [] SET BUILD_NUMBER=local
 if [%DEPLOYMENT_SLOT%] EQU [] SET DEPLOYMENT_SLOT=CI
+if [%IS_VALIDATION_BUILD%] EQU [] SET IS_VALIDATION_BUILD=0
 
 SET BUILD_TOOLS_DIR=%~dp0.build
 mkdir "%BUILD_TOOLS_DIR%"
