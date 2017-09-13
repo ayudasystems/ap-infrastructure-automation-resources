@@ -20,7 +20,7 @@ echo Retrieve FAKE build tools
 SET FAKE_VERSION=4.57.4
 SET OCTOPUSTOOLS_VERSION=3.5.4
 SET NUGET_VERSION=4.3.0
-echo ^<Project Sdk="Microsoft.NET.Sdk"^>^<PropertyGroup^>^<TargetFramework^>netstandard1.0^</TargetFramework^>^</PropertyGroup^>^<ItemGroup^>^<PackageReference Include="Fake" Version="%FAKE_VERSION%" /^>^<PackageReference Include="NuGet.CommandLine" Version="%NUGET_VERSION%" /^>^<PackageReference Include="NuGet.CommandLine" Version="%NUGET_VERSION%" /^>^</ItemGroup^>^</Project^> > "%BUILD_TOOLS_DIR%\project.csproj"
+echo ^<Project Sdk="Microsoft.NET.Sdk"^>^<PropertyGroup^>^<TargetFramework^>netstandard1.0^</TargetFramework^>^</PropertyGroup^>^<ItemGroup^>^<PackageReference Include="Fake" Version="%FAKE_VERSION%" /^>^<PackageReference Include="OctopusTools" Version="%OCTOPUSTOOLS_VERSION%" /^>^<PackageReference Include="NuGet.CommandLine" Version="%NUGET_VERSION%" /^>^</ItemGroup^>^</Project^> > "%BUILD_TOOLS_DIR%\project.csproj"
 dotnet restore "%BUILD_TOOLS_DIR%" --packages "%BUILD_TOOLS_DIR%"
 del /F /Q "%BUILD_TOOLS_DIR%\project*.csproj"
 
