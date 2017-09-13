@@ -25,6 +25,6 @@ dotnet restore "%BUILD_TOOLS_DIR%" --packages "%BUILD_TOOLS_DIR%"
 del /F /Q "%BUILD_TOOLS_DIR%\project*.csproj"
 
 @echo Start FAKE build
-robocopy %BUILD_TOOLS_DIR%\FAKE\%FAKE_VERSION%\tools %BUILD_TOOLS_DIR%\FAKE *.dll
+robocopy %BUILD_TOOLS_DIR%\FAKE\%FAKE_VERSION%\tools %BUILD_TOOLS_DIR%\FAKE *.dll /NS /NC /NFL /NDL /NP /NJH /NJS
 %BUILD_TOOLS_DIR%\FAKE\%FAKE_VERSION%\tools\Fake.exe build.fsx --envvar deploymentSlot=%DEPLOYMENT_SLOT%
 if ERRORLEVEL 1 exit /b %ERRORLEVEL%
