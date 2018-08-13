@@ -23,19 +23,19 @@
       "comments": "App service plans.",
       "type": "Microsoft.Web/serverfarms",
       "sku": {
-        "name": "[params('appPlans')[copyIndex()].size]",
-        "tier": "[params('appPlans')[copyIndex()].tier]",
-        "size": "[params('appPlans')[copyIndex()].size]",
-        "family": "[first(params('appPlans')[copyIndex()].size)]",
-        "capacity": "[params('appPlans')[copyIndex()].capacity]"
+        "name": "[parameters('appPlans')[copyIndex()].size]",
+        "tier": "[parameters('appPlans')[copyIndex()].tier]",
+        "size": "[parameters('appPlans')[copyIndex()].size]",
+        "family": "[first(parameters('appPlans')[copyIndex()].size)]",
+        "capacity": "[parameters('appPlans')[copyIndex()].capacity]"
       },
       "kind": "app",
-      "name": "[params('appPlans')[copyIndex()].name]",
+      "name": "[parameters('appPlans')[copyIndex()].name]",
       "apiVersion": "2016-09-01",
       "location": "[resourceGroup().location]",
       "scale": null,
       "properties": {
-        "name": "[params('appPlans')[copyIndex()].name]",
+        "name": "[parameters('appPlans')[copyIndex()].name]",
         "perSiteScaling": false,
         "reserved": false,
         "targetWorkerCount": 0,
