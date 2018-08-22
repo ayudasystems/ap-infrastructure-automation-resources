@@ -2,38 +2,32 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "webApps": {
-      "type": "array",
-      "metadata": {
-        "description": "An array of objects describing the app plans to create. Each object should have 4 properties: name, appPlan, vDir and alwaysOn."
-      },
-      "defaultValue": [
-        {
-          "name": "webAppName",
-          "appPlan": "appPlanName",
-          "vDir": "app",
-          "alwaysOn": false
-        }
-      ]
-    },
-    "appPlans_resourceGroup": {
+    "webApp_name": {
       "type": "string",
-      "metadata": {
-        "description": "The name of the resource group where the app service plans are located."
-      }
+      "defaultValue": "webAppName"
     },
-    "webApps_slotName": {
+    "webApp_slotName": {
       "type": "string",
-      "metadata": {
-        "description": "The name of the staging slot to create for each web app."
-      },
       "defaultValue": "staging"
+    },
+    "webApp_vDir": {
+      "type": "string",
+      "defaultValue": "app"
+    },
+    "webApp_alwaysOn": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "appPlan_name": {
+      "type": "string",
+      "defaultValue": "appPlanName"
+    },
+    "appPlan_resourceGroup": {
+      "type": "string",
+      "defaultValue": "appPlanResourceGroup"
     },
     "appInsights_location": {
       "type": "string",
-      "metadata": {
-        "description": "The name of the location where the app insights resources will be created."
-      },
       "defaultValue": "eastus"
     }
   },
@@ -43,24 +37,20 @@
       "comments": "AppInsights for web apps.",
       "type": "Microsoft.Insights/components",
       "kind": "web",
-      "name": "[parameters('webApps')[copyIndex()].name]",
+      "name": "[parameters('webApp_name')]",
       "apiVersion": "2015-05-01",
       "location": "[parameters('appInsights_location')]",
       "scale": null,
       "properties": {
         "Application_Type": "web"
       },
-      "dependsOn": [],
-      "copy": {
-        "name": "ai_copy",
-        "count": "[length(parameters('webApps'))]"
-      }
+      "dependsOn": []
     },
     {
       "comments": "Web apps proper.",
       "type": "Microsoft.Web/sites",
       "kind": "app",
-      "name": "[parameters('webApps')[copyIndex()].name]",
+      "name": "[parameters('webApp_name')]",
       "apiVersion": "2016-08-01",
       "location": "[resourceGroup().location]",
       "scale": null,
@@ -68,17 +58,17 @@
         "enabled": true,
         "hostNameSslStates": [
           {
-            "name": "[concat(parameters('webApps')[copyIndex()].name,'.azurewebsites.net')]",
+            "name": "[concat(parameters('webApp_name'),'.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Standard"
           },
           {
-            "name": "[concat(parameters('webApps')[copyIndex()].name,'.scm.azurewebsites.net')]",
+            "name": "[concat(parameters('webApp_name'),'.scm.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId(parameters('appPlans_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps')[copyIndex()].appPlan)]",
+        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps_appPlan'))]",
         "reserved": false,
         "siteConfig": {
           "numberOfWorkers": 1,
@@ -101,12 +91,12 @@
           "httpLoggingEnabled": false,
           "logsDirectorySizeLimit": 100,
           "detailedErrorLoggingEnabled": false,
-          "publishingUsername": "[concat('$', parameters('webApps')[copyIndex()].name)]",
+          "publishingUsername": "[concat('$', parameters('webApp_name'))]",
           "publishingPassword": null,
           "appSettings": [
             {
               "name": "ApplicationInsights.InstrumentationKey",
-              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApps')[copyIndex()].name), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').InstrumentationKey]"
             }
           ],
           "metadata": null,
@@ -115,7 +105,7 @@
           "scmType": "None",
           "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
-          "alwaysOn": "[parameters('webApps')[copyIndex()].alwaysOn]",
+          "alwaysOn": "[parameters('webApps_alwaysOn')]",
           "javaVersion": "",
           "javaContainer": "",
           "javaContainerVersion": "",
@@ -129,8 +119,8 @@
               "virtualDirectories": []
             },
             {
-              "virtualPath": "[concat('/', parameters('webApps')[copyIndex()].vDir)]",
-              "physicalPath": "[concat('site\\', parameters('webApps')[copyIndex()].vDir)]",
+              "virtualPath": "[concat('/', parameters('webApps_vDir'))]",
+              "physicalPath": "[concat('site\\', parameters('webApps_vDir'))]",
               "preloadEnabled": false,
               "virtualDirectories": []
             }
@@ -186,37 +176,29 @@
         "dailyMemoryTimeQuota": 0
       },
       "dependsOn": [
-        "ai_copy"
-      ],
-      "copy": {
-        "name": "app_copy",
-        "count": "[length(parameters('webApps'))]"
-      }
+        "[resourceId('Microsoft.Insights/components', parameters('webApp_name'))]"
+      ]
     },
     {
       "comments": "Web app host bindings.",
       "type": "Microsoft.Web/sites/hostNameBindings",
-      "name": "[concat(parameters('webApps')[copyIndex()].name, '/', parameters('webApps')[copyIndex()].name, '.azurewebsites.net')]",
+      "name": "[concat(parameters('webApp_name'), '/', parameters('webApp_name'), '.azurewebsites.net')]",
       "apiVersion": "2016-08-01",
       "location": "North Central US",
       "scale": null,
       "properties": {
-        "siteName": "[parameters('webApps')[copyIndex()].name]",
+        "siteName": "[parameters('webApp_name')]",
         "hostNameType": "Verified"
       },
       "dependsOn": [
-        "app_copy"
-      ],
-      "copy": {
-        "name": "app_host_copy",
-        "count": "[length(parameters('webApps'))]"
-      }
+        "[resourceId('Microsoft.Web/sites', parameters('webApp_name'))]"
+      ]
     },
     {
       "comments": "Web app slots.",
       "type": "Microsoft.Web/sites/slots",
       "kind": "app",
-      "name": "[concat(parameters('webApps')[copyIndex()].name, '/', parameters('webApps_slotName'))]",
+      "name": "[concat(parameters('webApp_name'), '/', parameters('webApp_slotName'))]",
       "apiVersion": "2016-08-01",
       "location": "[resourceGroup().location]",
       "scale": null,
@@ -224,17 +206,17 @@
         "enabled": true,
         "hostNameSslStates": [
           {
-            "name": "[concat(parameters('webApps')[copyIndex()].name, '-', parameters('webApps_slotName'),'.azurewebsites.net')]",
+            "name": "[concat(parameters('webApp_name'), '-', parameters('webApp_slotName'),'.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Standard"
           },
           {
-            "name": "[concat(parameters('webApps')[copyIndex()].name, '-', parameters('webApps_slotName'),'.scm.azurewebsites.net')]",
+            "name": "[concat(parameters('webApp_name'), '-', parameters('webApp_slotName'),'.scm.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId(parameters('appPlans_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps')[copyIndex()].appPlan)]",
+        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps_appPlan'))]",
         "reserved": false,
         "siteConfig": {
           "numberOfWorkers": 1,
@@ -257,12 +239,12 @@
           "httpLoggingEnabled": false,
           "logsDirectorySizeLimit": 100,
           "detailedErrorLoggingEnabled": false,
-          "publishingUsername": "[concat('$', parameters('webApps')[copyIndex()].name)]",
+          "publishingUsername": "[concat('$', parameters('webApp_name'))]",
           "publishingPassword": null,
           "appSettings": [
             {
               "name": "ApplicationInsights.InstrumentationKey",
-              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApps')[copyIndex()].name), '2015-05-01').InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').InstrumentationKey]"
             }
           ],
           "metadata": null,
@@ -271,7 +253,7 @@
           "scmType": "None",
           "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
-          "alwaysOn": "[parameters('webApps')[copyIndex()].alwaysOn]",
+          "alwaysOn": "[parameters('webApps_alwaysOn')]",
           "javaVersion": "",
           "javaContainer": "",
           "javaContainerVersion": "",
@@ -285,8 +267,8 @@
               "virtualDirectories": []
             },
             {
-              "virtualPath": "[concat('/', parameters('webApps')[copyIndex()].vDir)]",
-              "physicalPath": "[concat('site\\', parameters('webApps')[copyIndex()].vDir)]",
+              "virtualPath": "[concat('/', parameters('webApps_vDir'))]",
+              "physicalPath": "[concat('site\\', parameters('webApps_vDir'))]",
               "preloadEnabled": false,
               "virtualDirectories": []
             }
@@ -342,31 +324,23 @@
         "dailyMemoryTimeQuota": 0
       },
       "dependsOn": [
-        "app_copy"
-      ],
-      "copy": {
-        "name": "slot_copy",
-        "count": "[length(parameters('webApps'))]"
-      }
+        "[resourceId('Microsoft.Web/sites', parameters('webApp_name'))]"
+      ]
     },
     {
       "comments": "Web app slot host bindings.",
       "type": "Microsoft.Web/sites/slots/hostNameBindings",
-      "name": "[concat(parameters('webApps')[copyIndex()].name, '/', parameters('webApps_slotName'),  '/', parameters('webApps')[copyIndex()].name, '-', parameters('webApps_slotName'), '.azurewebsites.net')]",
+      "name": "[concat(parameters('webApp_name'), '/', parameters('webApp_slotName'),  '/', parameters('webApp_name'), '-', parameters('webApp_slotName'), '.azurewebsites.net')]",
       "apiVersion": "2016-08-01",
       "location": "North Central US",
       "scale": null,
       "properties": {
-        "siteName": "[concat(parameters('webApps')[copyIndex()].name, '(', parameters('webApps_slotName'), ')')]",
+        "siteName": "[concat(parameters('webApp_name'), '(', parameters('webApp_slotName'), ')')]",
         "hostNameType": "Verified"
       },
       "dependsOn": [
-        "slot_copy"
-      ],
-      "copy": {
-        "name": "slot_host_copy",
-        "count": "[length(parameters('webApps'))]"
-      }
+        "[resourceId('Microsoft.Web/sites/slots', concat(parameters('webApp_name'), '/', parameters('webApp_slotName')))]"
+      ]
     }
   ]
 }

@@ -2,19 +2,21 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "appPlans": {
-      "type": "array",
-      "metadata": {
-        "description": "An array of objects describing the app plans to create. Each object should have 4 properties: name, tier, size and capacity."
-      },
-      "defaultValue": [
-        {
-          "name": "appPlanName",
-          "tier": "Standard",
-          "size": "S1",
-          "capacity": 1
-        }
-      ]
+    "name": {
+      "type": "string",
+      "defaultValue": "appPlanName"
+    },
+    "tier": {
+      "type": "string",
+      "defaultValue": "Standard"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "S1"
+    },
+    "capacity": {
+      "type": "string",
+      "defaultValue": "1"
     }
   },
   "variables": {},
@@ -23,29 +25,25 @@
       "comments": "App service plans.",
       "type": "Microsoft.Web/serverfarms",
       "sku": {
-        "name": "[parameters('appPlans')[copyIndex()].size]",
-        "tier": "[parameters('appPlans')[copyIndex()].tier]",
-        "size": "[parameters('appPlans')[copyIndex()].size]",
-        "family": "[first(parameters('appPlans')[copyIndex()].size)]",
-        "capacity": "[parameters('appPlans')[copyIndex()].capacity]"
+        "name": "[parameters('size')]",
+        "tier": "[parameters('tier')]",
+        "size": "[parameters('size')]",
+        "family": "[first(parameters('size'))]",
+        "capacity": "[parameters('capacity')]"
       },
       "kind": "app",
-      "name": "[parameters('appPlans')[copyIndex()].name]",
+      "name": "[parameters('name')]",
       "apiVersion": "2016-09-01",
       "location": "[resourceGroup().location]",
       "scale": null,
       "properties": {
-        "name": "[parameters('appPlans')[copyIndex()].name]",
+        "name": "[parameters('name')]",
         "perSiteScaling": false,
         "reserved": false,
         "targetWorkerCount": 0,
         "targetWorkerSizeId": 0
       },
-      "dependsOn": [],
-      "copy": {
-        "name": "plan_copy",
-        "count": "[length(parameters('appPlans'))]"
-      }
+      "dependsOn": []
     }
   ]
 }
