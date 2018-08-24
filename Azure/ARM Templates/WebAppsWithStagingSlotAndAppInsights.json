@@ -339,7 +339,7 @@
         "hostNameType": "Verified"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites/slots', concat(parameters('webApp_name'), '/', parameters('webApp_slotName')))]"
+        "[resourceId('Microsoft.Web/sites/slots', parameters('webApp_name'), parameters('webApp_slotName'))]"
       ]
     }
   ]
