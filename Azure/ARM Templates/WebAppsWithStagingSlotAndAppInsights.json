@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.2",
+  "contentVersion": "1.0.0.3",
   "parameters": {
     "webApp_name": {
       "type": "string",
@@ -68,7 +68,7 @@
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps_appPlan'))]",
+        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('appPlan_name'))]",
         "reserved": false,
         "siteConfig": {
           "numberOfWorkers": 1,
@@ -105,7 +105,7 @@
           "scmType": "None",
           "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
-          "alwaysOn": "[parameters('webApps_alwaysOn')]",
+          "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
           "javaContainer": "",
           "javaContainerVersion": "",
@@ -119,8 +119,8 @@
               "virtualDirectories": []
             },
             {
-              "virtualPath": "[concat('/', parameters('webApps_vDir'))]",
-              "physicalPath": "[concat('site\\', parameters('webApps_vDir'))]",
+              "virtualPath": "[concat('/', parameters('webApp_vDir'))]",
+              "physicalPath": "[concat('site\\', parameters('webApp_vDir'))]",
               "preloadEnabled": false,
               "virtualDirectories": []
             }
@@ -216,7 +216,7 @@
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('webApps_appPlan'))]",
+        "serverFarmId": "[resourceId(parameters('appPlan_resourceGroup'), 'Microsoft.Web/serverfarms', parameters('appPlan_name'))]",
         "reserved": false,
         "siteConfig": {
           "numberOfWorkers": 1,
@@ -253,7 +253,7 @@
           "scmType": "None",
           "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
-          "alwaysOn": "[parameters('webApps_alwaysOn')]",
+          "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
           "javaContainer": "",
           "javaContainerVersion": "",
@@ -267,8 +267,8 @@
               "virtualDirectories": []
             },
             {
-              "virtualPath": "[concat('/', parameters('webApps_vDir'))]",
-              "physicalPath": "[concat('site\\', parameters('webApps_vDir'))]",
+              "virtualPath": "[concat('/', parameters('webApp_vDir'))]",
+              "physicalPath": "[concat('site\\', parameters('webApp_vDir'))]",
               "preloadEnabled": false,
               "virtualDirectories": []
             }
