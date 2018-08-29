@@ -26,8 +26,6 @@ IF NOT EXIST "%BUILD_TOOLS_DIR%\fake.exe" (
 )
 
 @echo Start FAKE build
-REM robocopy %BUILD_TOOLS_DIR%\FAKE\%FAKE_VERSION%\tools %BUILD_TOOLS_DIR%\FAKE *.dll /NS /NC /NFL /NDL /NP /NJH /NJS
-REM %BUILD_TOOLS_DIR%\FAKE\%FAKE_VERSION%\tools\Fake.exe build.fsx Default -EV deploymentSlot=%DEPLOYMENT_SLOT%
-
 "%BUILD_TOOLS_DIR%/fake.exe" run build.fsx
+
 if ERRORLEVEL 1 exit /b %ERRORLEVEL%
