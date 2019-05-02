@@ -18,6 +18,10 @@
       "type": "string",
       "defaultValue": "false"
     },
+    "webApp_deployWithScm": {
+      "type": "string",
+      "defaultValue": "true"
+    },
     "appPlan_name": {
       "type": "string",
       "defaultValue": "appPlanName"
@@ -84,6 +88,10 @@
             {
               "name": "ApplicationInsights.InstrumentationKey",
               "value": "[parameters('appInsights_instrumentationKey')]"
+            },
+            {
+              "name": "WEBSITE_WEBDEPLOY_USE_SCM",
+              "value": "[parameters('webApp_deployWithScm')]"
             }
           ],
           "metadata": null,
