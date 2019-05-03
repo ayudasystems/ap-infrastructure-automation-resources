@@ -84,6 +84,10 @@
             {
               "name": "ApplicationInsights.InstrumentationKey",
               "value": "[parameters('appInsights_instrumentationKey')]"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[parameters('appInsights_instrumentationKey')]"
             }
           ],
           "metadata": null,
