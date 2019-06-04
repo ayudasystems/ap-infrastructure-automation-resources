@@ -112,7 +112,7 @@
             {
               "virtualPath": "[concat('/', parameters('webApp_vDir'))]",
               "physicalPath": "[concat('site\\', parameters('webApp_vDir'))]",
-              "preloadEnabled": false,
+              "preloadEnabled": [parameters('webApp_alwaysOn')],
               "virtualDirectories": []
             }
           ],
@@ -262,7 +262,7 @@
             {
               "virtualPath": "[concat('/', parameters('webApp_vDir'))]",
               "physicalPath": "[concat('site\\', parameters('webApp_vDir'))]",
-              "preloadEnabled": false,
+              "preloadEnabled": [parameters('webApp_alwaysOn')],
               "virtualDirectories": []
             }
           ],
