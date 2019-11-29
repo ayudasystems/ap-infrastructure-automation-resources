@@ -18,10 +18,6 @@
       "type": "string",
       "defaultValue": "false"
     },
-    "webApp_use32Bits": {
-      "type": "string",
-      "defaultValue": "true"
-    },
     "appPlan_name": {
       "type": "string",
       "defaultValue": "appPlanName"
@@ -98,7 +94,7 @@
           "connectionStrings": [],
           "machineKey": null,
           "scmType": "None",
-          "use32BitWorkerProcess": "[parameters('webApp_use32Bits')]",
+          "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
           "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
@@ -248,7 +244,7 @@
           "connectionStrings": [],
           "machineKey": null,
           "scmType": "None",
-          "use32BitWorkerProcess": "[parameters('webApp_use32Bits')]",
+          "use32BitWorkerProcess": true,
           "webSocketsEnabled": false,
           "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
