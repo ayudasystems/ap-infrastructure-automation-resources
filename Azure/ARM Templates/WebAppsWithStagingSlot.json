@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "webApp_name": {
       "type": "string",
@@ -17,6 +17,10 @@
     "webApp_alwaysOn": {
       "type": "string",
       "defaultValue": "false"
+    },
+    "webApp_use32Bits": {
+      "type": "string",
+      "defaultValue": "true"
     },
     "appPlan_name": {
       "type": "string",
@@ -94,7 +98,7 @@
           "connectionStrings": [],
           "machineKey": null,
           "scmType": "None",
-          "use32BitWorkerProcess": true,
+          "use32BitWorkerProcess": "[parameters('webApp_use32Bits')]",
           "webSocketsEnabled": false,
           "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
@@ -244,7 +248,7 @@
           "connectionStrings": [],
           "machineKey": null,
           "scmType": "None",
-          "use32BitWorkerProcess": true,
+          "use32BitWorkerProcess": "[parameters('webApp_use32Bits')]",
           "webSocketsEnabled": false,
           "alwaysOn": "[parameters('webApp_alwaysOn')]",
           "javaVersion": "",
