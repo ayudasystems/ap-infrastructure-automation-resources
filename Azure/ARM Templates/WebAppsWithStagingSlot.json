@@ -162,7 +162,7 @@
           "xManagedServiceIdentityId": null,
           "http20Enabled": false,
           "minTlsVersion": "1.2",
-          "ftpsState": "FtpsOnly"
+          "ftpsState": "AllAllowed"
         },
         "clientAffinityEnabled": false,
         "clientCertEnabled": false,
