@@ -6,6 +6,10 @@
       "type": "string",
       "defaultValue": "webAppName"
     },
+    "webApp_slotName": {
+      "type": "string",
+      "defaultValue": "staging"
+    },
     "webApp_vDir": {
       "type": "string",
       "defaultValue": "app"
