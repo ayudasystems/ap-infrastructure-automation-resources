@@ -78,7 +78,7 @@
           "windowsFxVersion": null,
           "requestTracingEnabled": false,
           "remoteDebuggingEnabled": false,
-          "remoteDebuggingVersion": "VS2017",
+          "remoteDebuggingVersion": "VS2022",
           "httpLoggingEnabled": false,
           "logsDirectorySizeLimit": 100,
           "detailedErrorLoggingEnabled": false,
