@@ -29,10 +29,6 @@
     "appInsights_location": {
       "type": "string",
       "defaultValue": "eastus"
-    },
-    "appInsights_connectionString": {
-      "type": "string",
-      "defaultValue": "appInsightsConnectionString"
     }
   },
   "variables": {},
@@ -104,7 +100,7 @@
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[parameters('appInsights_connectionString')]"
+              "value": "[reference(concat('microsoft.insights/components/', parameters('webApp_name')), '2015-05-01').ConnectionString]"
             }
           ],
           "metadata": null,
@@ -256,7 +252,7 @@
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[parameters('appInsights_connectionString')]"
+              "value": "[reference(concat('microsoft.insights/components/', parameters('webApp_name')), '2015-05-01').ConnectionString]"
             }
           ],
           "metadata": null,
