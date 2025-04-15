@@ -96,6 +96,10 @@
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
               "value": "[parameters('appInsights_instrumentationKey')]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[parameters('appInsights_connectionString')]"
             }
           ],
           "metadata": null,

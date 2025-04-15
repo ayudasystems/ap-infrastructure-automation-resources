@@ -97,6 +97,14 @@
             {
               "name": "ApplicationInsights.InstrumentationKey",
               "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(concat('microsoft.insights/components/', parameters('webApp_name')), '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "ApplicationInsights.ConnectionString",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').ConnectionString]"
             }
           ],
           "metadata": null,
@@ -245,6 +253,14 @@
             {
               "name": "ApplicationInsights.InstrumentationKey",
               "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(concat('microsoft.insights/components/', parameters('webApp_name')), '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "ApplicationInsights.ConnectionString",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('webApp_name')), '2015-05-01').ConnectionString]"
             }
           ],
           "metadata": null,
