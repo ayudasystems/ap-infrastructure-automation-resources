@@ -36,7 +36,7 @@
     },
     "appInsights_connectionString": {
       "type": "string",
-      "defaultValue": "appInsightsConnectionString"
+      "defaultValue": "InstrumentationKey=00000000-0000-0000-0000-000000000000=https://localhost;LiveEndpoint=https://localhost;ApplicationId=00000000-0000-0000-0000-000000000000"
     }
   },
   "variables": {},
