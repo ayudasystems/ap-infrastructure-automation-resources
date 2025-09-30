@@ -1,3 +1,8 @@
+# TODO
+# - Group by 'OwnedByTeam'
+# - Get for all subscriptions
+
+
 # Connect if not connected already
 # Connect-AzAccount
 
@@ -5,7 +10,6 @@
 $resources = Get-AzResource
 
 # Group by tags
-    # Need to group by 'OwnedByTeam still'
 $grouped = $resources | Where-Object { $_.Tags } | ForEach-Object {
     foreach ($tag in $_.Tags.GetEnumerator()) {
         [PSCustomObject]@{
