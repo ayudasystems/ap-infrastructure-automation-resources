@@ -25,6 +25,3 @@ foreach ($group in $grouped) {
     Write-Output "`nTag: $($group.Name)"
     $group.Group | ForEach-Object { Write-Output "  - $($_.Resource)" }
 }
-
-
-OWNED BY TEAM
