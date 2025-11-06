@@ -1,13 +1,13 @@
 $TagName = 'OwnedByTeam'
-
 $subscriptions = Get-AzSubscription
+
+$AllResourceResults = @()
+$AllResourceGroupResults = @()
 
 foreach ($sub in $subscriptions) {
     Set-AzContext -SubscriptionId $sub.Id
 
-    # -----------------------------------------------
-    ## 1. Get Resources (Excluding Resource Groups)
-    # -----------------------------------------------
+    # Resources (excluding resource groups)
     $AllResources = Get-AzResource | Where-Object {
         $_.ResourceType -ne 'Microsoft.Resources/resourceGroups'
     }
@@ -33,12 +33,9 @@ foreach ($sub in $subscriptions) {
         Name = 'Location'
         Expression = { $_.Location }
     }
-    $ResourcesFileName = "Azure_Resources_Missing_OwnedByTeam_$($sub.Name).csv"
-    $ResourceResults | Export-Csv -Path $ResourcesFileName -NoTypeInformation
+    $AllResourceResults += $ResourceResults
 
-    # -----------------------------------------------
-    ## 2. Get Resource Groups
-    # -----------------------------------------------
+    # Resource Groups
     $ResourceGroupsWithoutTag = Get-AzResourceGroup | Where-Object {
         $_.Tags -eq $null -or $_.Tags.Keys -notcontains $TagName
     }
@@ -61,11 +58,13 @@ foreach ($sub in $subscriptions) {
         Name = 'Location'
         Expression = { $_.Location }
     }
-    $ResourceGroupsFileName = "Azure_RGs_Missing_OwnedByTeam_$($sub.Name).csv"
-    $ResourceGroupResults | Export-Csv -Path $ResourceGroupsFileName -NoTypeInformation
-
-    Write-Host "Exported: $ResourcesFileName"
-    Write-Host "Exported: $ResourceGroupsFileName"
+    $AllResourceGroupResults += $ResourceGroupResults
 }
 
-Write-Host "✅ Export Complete! Two files per subscription have been saved to your Cloud Shell home directory."
+$ResourcesFileName = "Azure_Resources_Missing_OwnedByTeam_AllSubscriptions.csv"
+$ResourceGroupsFileName = "Azure_RGs_Missing_OwnedByTeam_AllSubscriptions.csv"
+
+$AllResourceResults | Export-Csv -Path $ResourcesFileName -NoTypeInformation
+$AllResourceGroupResults | Export-Csv -Path $ResourceGroupsFileName -NoTypeInformation
+
+Write-Host "✅ Export Complete! Two files have been saved to your Cloud Shell home directory."
