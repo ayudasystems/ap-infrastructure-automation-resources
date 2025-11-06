@@ -1,27 +1,30 @@
-# TODO
-# - Group by 'OwnedByTeam'
-# - Get for all subscriptions
+# Get all subscriptions
+$subscriptions = Get-AzSubscription
 
+foreach ($sub in $subscriptions) {
+    Set-AzContext -SubscriptionId $sub.Id
 
-# Connect if not connected already
-# Connect-AzAccount
+    $resources = Get-AzResource
 
-# Get all resources in the subscription
-$resources = Get-AzResource
-
-# Group by tags
-$grouped = $resources | Where-Object { $_.Tags } | ForEach-Object {
-    foreach ($tag in $_.Tags.GetEnumerator()) {
-        [PSCustomObject]@{
-            TagKey   = $tag.Key
-            TagValue = $tag.Value
-            Resource = $_.ResourceId
+    $taggedResources = $resources | Where-Object { $_.Tags } | ForEach-Object {
+        foreach ($tag in $_.Tags.GetEnumerator()) {
+            [PSCustomObject]@{
+                SubscriptionName = $sub.Name
+                SubscriptionId   = $sub.Id
+                TagKey           = $tag.Key
+                TagValue         = $tag.Value
+                ResourceName     = $_.Name
+                ResourceId       = $_.ResourceId
+                ResourceType     = $_.ResourceType
+                ResourceGroup    = $_.ResourceGroupName
+                Location         = $_.Location
+            }
         }
     }
-} | Group-Object TagKey, TagValue
 
-# Print grouped resources
-foreach ($group in $grouped) {
-    Write-Output "`nTag: $($group.Name)"
-    $group.Group | ForEach-Object { Write-Output "  - $($_.Resource)" }
+    $csvFile = "Azure_Resources_ByTags_$($sub.Name).csv"
+    $taggedResources | Export-Csv -Path $csvFile -NoTypeInformation
+    Write-Host "Exported: $csvFile"
 }
+
+Write-Host "✅ Export Complete! One file per subscription has been saved to your Cloud Shell home directory."
