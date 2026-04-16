@@ -15,12 +15,12 @@
       "defaultValue": "app"
     },
     "webApp_alwaysOn": {
-      "type": "string",
-      "defaultValue": "false"
+      "type": "bool",
+      "defaultValue": false
     },
     "webApp_use32Bits": {
-      "type": "string",
-      "defaultValue": "true"
+      "type": "bool",
+      "defaultValue": true
     },
     "appPlan_name": {
       "type": "string",
