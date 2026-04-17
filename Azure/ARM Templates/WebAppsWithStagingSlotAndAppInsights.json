@@ -19,8 +19,8 @@
       "defaultValue": "false"
     },
     "webApp_use32Bits": {
-      "type": "bool",
-      "defaultValue": true
+      "type": "string",
+      "defaultValue": "true"
     },
     "appPlan_name": {
       "type": "string",
@@ -115,7 +115,7 @@
           "connectionStrings": [],
           "machineKey": null,
           "scmType": "None",
-          "use32BitWorkerProcess": "[parameters('webApp_use32Bits')]",
+          "use32BitWorkerProcess": "[bool(parameters('webApp_use32Bits'))]",
           "webSocketsEnabled": false,
           "alwaysOn": "[bool(parameters('webApp_alwaysOn'))]",
           "javaVersion": "",
