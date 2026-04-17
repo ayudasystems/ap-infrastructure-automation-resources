@@ -19,8 +19,8 @@
       "defaultValue": "false"
     },
     "webApp_use32Bits": {
-      "type": "string",
-      "defaultValue": "true"
+      "type": "bool",
+      "defaultValue": true
     },
     "appPlan_name": {
       "type": "string",
