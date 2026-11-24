@@ -3,8 +3,8 @@
 .SYNOPSIS
     Inventories Azure API Management services and rotates subscription keys after explicit approval.
 .DESCRIPTION
-    Signs in with the current Az.Accounts context, enumerates every Azure subscription available to the
-    user, and for each APIM service (one at a time) inventories metadata, checks user Notes (empty or
+    Signs in interactively with Az.Accounts, lists the account's Azure subscriptions and lets you pick one
+    (then asks whether to pick another or finish). For each APIM service (one at a time), inventories metadata, checks user Notes (empty or
     not only), asks for approval and regenerates the primary and/or secondary subscription keys through
     the Regenerate Primary/Secondary Key REST APIs (api-version 2024-05-01, Invoke-AzRestMethod only).
     Named values, identity-provider, OpenID Connect and Auth0 secrets are never modified. No key value and
@@ -14,7 +14,13 @@
 .PARAMETER RotateKey
     Primary, Secondary or All. Required for a run.
 .PARAMETER OutputRoot
-    Folder that receives reports/<yyyyMMdd-HHmmss>/ (default: reports next to this script).
+    Folder that receives a timestamped report folder (default: reports next to this script).
+.PARAMETER WhatIf
+    Simulates key regeneration without changing keys. Authentication, inventory, approval prompts and reports still run.
+.EXAMPLE
+    .\Invoke-ApimKeyRotation.ps1 -RotateKey Primary -WhatIf
+.EXAMPLE
+    .\Invoke-ApimKeyRotation.ps1 -RotateKey All -OutputRoot C:\Reports
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
@@ -163,12 +169,39 @@ function Invoke-ApimRequest {
 
 # ---------------------------------------------------------------- discovery and inventory
 
-function Get-ApimServices {
+function Get-AzureSubscriptionList {
     [CmdletBinding()]
     param()
-    $azSubscriptions = @(Invoke-ApimRequest -Method GET -Path "/subscriptions?api-version=$($script:ArmApiVersion)")
+    @(Invoke-ApimRequest -Method GET -Path "/subscriptions?api-version=$($script:ArmApiVersion)") |
+        Where-Object { $_.subscriptionId }
+}
+
+function Select-AzureSubscription {
+    [CmdletBinding()]
+    param([object[]]$Subscriptions)
+    Write-Host ''
+    Write-Host 'Available Azure subscriptions:'
+    for ($n = 0; $n -lt $Subscriptions.Count; $n++) {
+        $s = $Subscriptions[$n]
+        Write-Host ("  [{0}] {1} ({2}) - {3}" -f ($n + 1), $s.displayName, $s.subscriptionId, $s.state)
+    }
+    while ($true) {
+        $answer = ([string](Read-Host -Prompt "Select a subscription (1-$($Subscriptions.Count)) or Q to finish")).Trim()
+        if ($answer -match '^(q|quit)$') { return $null }
+        $index = 0
+        if ([int]::TryParse($answer, [ref]$index) -and $index -ge 1 -and $index -le $Subscriptions.Count) {
+            return $Subscriptions[$index - 1]
+        }
+        Write-Host 'Invalid selection.'
+    }
+}
+
+function Get-ApimServices {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$SubscriptionId)
+    $azSubscriptions = @(Get-AzureSubscriptionList)
     foreach ($azSub in $azSubscriptions) {
-        if (-not $azSub.subscriptionId) { continue }
+        if ($azSub.subscriptionId -ne $SubscriptionId) { continue }
         try {
             $found = @(Invoke-ApimRequest -Method GET -Path "/subscriptions/$($azSub.subscriptionId)/providers/Microsoft.ApiManagement/service?api-version=$($script:ApimApiVersion)")
         }
@@ -560,11 +593,9 @@ function Invoke-ApimKeyRotationMain {
         throw 'The Az.Accounts module is required (Install-Module Az.Accounts).'
     }
 
-    $context = Get-AzContext
-    if (-not $context) {
-        Connect-AzAccount | Out-Null
-        $context = Get-AzContext
-    }
+    Write-Host 'Sign in to Azure in your browser.'
+    Connect-AzAccount -WhatIf:$false -Confirm:$false -ErrorAction Stop | Out-Null
+    Get-AzAccessToken -ErrorAction Stop | Out-Null
     Write-Host "Signed in as $(Get-SignedInIdentity)"
 
     $runFolder = Join-Path $OutputRoot (Get-Date -Format 'yyyyMMdd-HHmmss')
@@ -575,8 +606,15 @@ function Invoke-ApimKeyRotationMain {
 
     $allResults = [System.Collections.Generic.List[object]]::new()
     $failures = 0
-    $services = @(Get-ApimServices)
-    if ($services.Count -eq 0) { Write-Host 'No APIM services found in the accessible Azure subscriptions.' }
+    $azureSubscriptions = @(Get-AzureSubscriptionList)
+    if ($azureSubscriptions.Count -eq 0) { Write-Host 'No Azure subscriptions are available for this account.' }
+
+    while ($azureSubscriptions.Count -gt 0) {
+    $selected = Select-AzureSubscription -Subscriptions $azureSubscriptions
+    if (-not $selected) { break }
+    Write-Host "Checking APIM services in $($selected.displayName) ($($selected.subscriptionId))..."
+    $services = @(Get-ApimServices -SubscriptionId $selected.subscriptionId)
+    if ($services.Count -eq 0) { Write-Host "No APIM services found in Azure subscription $($selected.subscriptionId)." }
 
     for ($i = 0; $i -lt $services.Count; $i++) {
         $service = $services[$i]
@@ -624,6 +662,10 @@ function Invoke-ApimKeyRotationMain {
         }
     }
 
+    $another = Read-Host -Prompt 'Select another subscription? (Y/n)'
+    if (([string]$another).Trim() -match '^(n|no)$') { break }
+    }
+
     Write-RotationSummary -Results $allResults
     if ($failures -gt 0) { return 1 }
     return 0
@@ -631,6 +673,23 @@ function Invoke-ApimKeyRotationMain {
 
 # Run the main flow only when invoked as a script, never when dot-sourced.
 if ($MyInvocation.InvocationName -ne '.') {
+    if (-not $RotateKey) {
+        Write-Host @'
+Usage:
+  .\Invoke-ApimKeyRotation.ps1 -RotateKey <Primary|Secondary|All> [-OutputRoot <path>] [-WhatIf] [-Confirm]
+
+  -RotateKey   Required. Select the primary key, secondary key, or both (All).
+  -OutputRoot  Optional. Report folder; defaults to 'reports' next to the script.
+  -WhatIf      Simulate key regeneration without changing keys. Authentication,
+               inventory, approval prompts, and reports still run.
+  -Confirm     Ask for confirmation of each key regeneration.
+
+Examples:
+  .\Invoke-ApimKeyRotation.ps1 -RotateKey Primary -WhatIf
+  .\Invoke-ApimKeyRotation.ps1 -RotateKey All -OutputRoot C:\Reports
+'@
+        exit 1
+    }
     $exitCode = Invoke-ApimKeyRotationMain -RotateKey $RotateKey -OutputRoot $OutputRoot
     exit ([int]($exitCode | Select-Object -Last 1))
 }
