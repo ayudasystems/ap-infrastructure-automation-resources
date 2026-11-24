@@ -14,9 +14,23 @@ Describe 'Preflight' {
         $out | Should -Match 'Pester >= 99\.0 is required'
     }
 
+    It 'Given no rotation scope When the script is invoked Then it shows usage without starting a run' {
+        $scriptPath = Join-Path $PSScriptRoot '..\Invoke-ApimKeyRotation.ps1'
+        $outputRoot = Join-Path $TestDrive 'no-run'
+        $out = & pwsh -NoProfile -File $scriptPath -OutputRoot $outputRoot -WhatIf 2>&1 | Out-String
+        $LASTEXITCODE | Should -Be 1
+        $out | Should -Match 'Usage:'
+        $out | Should -Match '<Primary\|Secondary\|All>'
+        $out | Should -Match '-OutputRoot'
+        $out | Should -Match '-WhatIf'
+        $out | Should -Match '-Confirm'
+        $out | Should -Not -Match 'Exception:'
+        Test-Path $outputRoot | Should -BeFalse
+    }
+
     It 'Given the skeleton script When it is dot-sourced Then it loads and exposes the planned functions' {
         . (Join-Path $PSScriptRoot '..\Invoke-ApimKeyRotation.ps1')
-        foreach ($f in 'Invoke-ApimRequest', 'Get-ApimServices', 'Get-ApimInventory', 'Test-UserNotes',
+        foreach ($f in 'Invoke-ApimRequest', 'Get-ApimServices', 'Get-AzureSubscriptionList', 'Select-AzureSubscription', 'Get-ApimInventory', 'Test-UserNotes',
                        'Invoke-KeyRotation', 'Confirm-ServiceRotation', 'Confirm-MasterRotation',
                        'Write-ServiceReport', 'Add-RotationLogRow') {
             Get-Command $f -CommandType Function -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty -Because $f

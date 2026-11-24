@@ -12,7 +12,7 @@ function Invoke-AzRestMethod {
           $ResourceProviderName, $ResourceType, $Name, $Uri, $Headers, [switch]$AsJob)
     throw $script:SafetyMessage
 }
-function Connect-AzAccount { [CmdletBinding()] param([Parameter(ValueFromRemainingArguments)]$Rest) throw $script:SafetyMessage }
+function Connect-AzAccount { [CmdletBinding(SupportsShouldProcess = $true)] param([string]$Subscription, [Parameter(ValueFromRemainingArguments)]$Rest) throw $script:SafetyMessage }
 function Get-AzContext { [CmdletBinding()] param([Parameter(ValueFromRemainingArguments)]$Rest) throw $script:SafetyMessage }
 function Set-AzContext { [CmdletBinding()] param([Parameter(ValueFromRemainingArguments)]$Rest) throw $script:SafetyMessage }
 function Get-AzSubscription { [CmdletBinding()] param([Parameter(ValueFromRemainingArguments)]$Rest) throw $script:SafetyMessage }

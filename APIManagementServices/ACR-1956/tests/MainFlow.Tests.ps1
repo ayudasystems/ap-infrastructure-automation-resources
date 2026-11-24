@@ -16,13 +16,22 @@ Describe 'Main flow (fully mocked end to end)' {
         $script:rotateFails = @()
         $script:out = Join-Path $TestDrive ('out-' + [guid]::NewGuid().ToString('N'))
         Mock Invoke-AzRestMethod { throw 'SAFETY: main flow must never reach Azure' }
-        Mock Connect-AzAccount { throw 'SAFETY: no login from tests' }
-        Mock Get-AzContext { [pscustomobject]@{ Account = [pscustomobject]@{ Id = 'tester@example.com' } } }
+        Mock Connect-AzAccount { $script:order.Add('login') }
+        Mock Get-AzAccessToken { $script:order.Add('token'); [pscustomobject]@{ Token = $script:KeyCanary } }
+        Mock Get-AzContext {
+            [pscustomobject]@{ Account = [pscustomobject]@{ Id = 'tester@example.com' } }
+        }
+        $script:subsList = @([pscustomobject]@{ subscriptionId = 'sub-1'; displayName = 'Sub One'; state = 'Enabled' },
+                             [pscustomobject]@{ subscriptionId = 'sub-2'; displayName = 'Sub Two'; state = 'Enabled' })
+        $script:picks = [System.Collections.Generic.Queue[object]]::new()
+        $script:picks.Enqueue($script:subsList[0])
+        Mock Get-AzureSubscriptionList { $script:order.Add('list'); $script:subsList }
+        Mock Select-AzureSubscription { $script:order.Add('pick'); if ($script:picks.Count) { $script:picks.Dequeue() } else { $null } }
         Mock Start-Sleep { }
         Mock Write-Host { $script:hostText += ($Object -join ' ') + "`n" }
         $script:hostText = ''
-        Mock Get-ApimServices { @((New-TestService 'apim-a'), (New-TestService 'apim-b')) }
-        Mock Read-Host { $script:order.Add('continue?'); if ($script:answers.Count) { $script:answers.Dequeue() } else { 'y' } }
+        Mock Get-ApimServices { $script:order.Add('discovery'); @((New-TestService 'apim-a'), (New-TestService 'apim-b')) }
+        Mock Read-Host { $script:order.Add('continue?'); if ($Prompt -like 'Select another*') { return 'n' }; if ($script:answers.Count) { $script:answers.Dequeue() } else { 'y' } }
         Mock Confirm-ServiceRotation { $script:order.Add("approve:$($Service.Name)"); [bool]$script:serviceAnswers[$Service.Name] }
         Mock Confirm-MasterRotation { $script:order.Add("master:$($Service.Name)"); $false }
         Mock Invoke-ApimRequest {
@@ -34,6 +43,48 @@ Describe 'Main flow (fully mocked end to end)' {
                 default { @() }
             }
         }
+    }
+
+    It 'Given WhatIf and Confirm When the flow runs Then sign-in and token acquisition precede discovery' {
+        Invoke-ApimKeyRotationMain -RotateKey Secondary -OutputRoot $script:out -WhatIf -Confirm | Out-Null
+        $script:order[0..4] -join ',' | Should -Be 'login,token,list,pick,discovery'
+        Should -Invoke Connect-AzAccount -Times 1 -Exactly -ParameterFilter { -not $WhatIf -and -not $Confirm }
+        Should -Invoke Get-AzAccessToken -Times 1 -Exactly
+        $script:posts.Count | Should -Be 0
+    }
+
+    It 'Given an invalid rotation scope When the flow starts Then authentication is not attempted' {
+        { Invoke-ApimKeyRotationMain -RotateKey Invalid -OutputRoot $script:out } | Should -Throw '*-RotateKey*'
+        Should -Invoke Connect-AzAccount -Times 0 -Exactly
+        Should -Invoke Get-AzAccessToken -Times 0 -Exactly
+    }
+
+    It 'Given authentication fails When the flow starts Then discovery and report creation do not occur' {
+        Mock Connect-AzAccount { throw 'Sign-in failed' }
+        { Invoke-ApimKeyRotationMain -RotateKey Primary -OutputRoot $script:out } | Should -Throw '*Sign-in failed*'
+        Should -Invoke Get-AzAccessToken -Times 0 -Exactly
+        Should -Invoke Get-ApimServices -Times 0 -Exactly
+        Test-Path $script:out | Should -BeFalse
+    }
+
+    It 'Given token acquisition fails When the flow starts Then discovery and report creation do not occur' {
+        Mock Get-AzAccessToken { throw 'Token acquisition failed' }
+        { Invoke-ApimKeyRotationMain -RotateKey Primary -OutputRoot $script:out } | Should -Throw '*Token acquisition failed*'
+        Should -Invoke Get-ApimServices -Times 0 -Exactly
+        Test-Path $script:out | Should -BeFalse
+    }
+
+    It 'Given two subscriptions picked in turn When the flow runs Then each is discovered and the summary is shared' {
+        $script:picks.Enqueue($script:subsList[1])
+        Mock Read-Host { if ($Prompt -like 'Select another*') { 'y' } else { 'y' } }
+        Invoke-ApimKeyRotationMain -RotateKey Primary -OutputRoot $script:out -WhatIf | Out-Null
+        Should -Invoke Get-ApimServices -Times 1 -Exactly -ParameterFilter { $SubscriptionId -eq 'sub-1' }
+        Should -Invoke Get-ApimServices -Times 1 -Exactly -ParameterFilter { $SubscriptionId -eq 'sub-2' }
+    }
+
+    It 'Given the user declines another subscription When the first finishes Then the flow ends' {
+        Invoke-ApimKeyRotationMain -RotateKey Primary -OutputRoot $script:out -WhatIf | Out-Null
+        Should -Invoke Select-AzureSubscription -Times 1 -Exactly
     }
 
     It 'Given two services both approved When the flow runs Then each is rotated in turn, one service at a time' {
@@ -125,6 +176,7 @@ Describe 'Main flow (fully mocked end to end)' {
     It 'Given the whole flow When it runs Then no real Azure command is invoked' {
         Invoke-ApimKeyRotationMain -RotateKey All -OutputRoot $script:out -Confirm:$false | Out-Null
         Should -Invoke Invoke-AzRestMethod -Times 0 -Exactly
-        Should -Invoke Connect-AzAccount -Times 0 -Exactly
+        Should -Invoke Connect-AzAccount -Times 1 -Exactly
+        Should -Invoke Get-AzAccessToken -Times 1 -Exactly
     }
 }

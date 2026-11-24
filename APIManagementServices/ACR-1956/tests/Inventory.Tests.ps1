@@ -15,12 +15,12 @@ Describe 'Discovery, inventory and Note check' {
             $script:requests.Add(@{ Method = $Method; Path = $Path })
             # Azure subscription listing: anchored regex ('?' in a wildcard would also match '/').
             if ($Path -match '^/subscriptions\?') {
-                return @([pscustomobject]@{ subscriptionId = 'aaaa'; displayName = 'Sub With Apim' },
+                return @([pscustomobject]@{ subscriptionId = 'aaaaaaaa-0000-0000-0000-000000000001'; displayName = 'Sub With Apim' },
                          [pscustomobject]@{ subscriptionId = 'bbbb'; displayName = 'Sub Without Apim' })
             }
             switch -Wildcard ($Path) {
-                '/subscriptions/aaaa/providers/Microsoft.ApiManagement/service*' {
-                    @([pscustomobject]@{ name = 'apim-one'; id = '/subscriptions/aaaa/resourceGroups/rg-one/providers/Microsoft.ApiManagement/service/apim-one'; sku = [pscustomobject]@{ name = 'Developer' } }); break }
+                '/subscriptions/aaaaaaaa-0000-0000-0000-000000000001/providers/Microsoft.ApiManagement/service*' {
+                    @([pscustomobject]@{ name = 'apim-one'; id = '/subscriptions/aaaaaaaa-0000-0000-0000-000000000001/resourceGroups/rg-one/providers/Microsoft.ApiManagement/service/apim-one'; sku = [pscustomobject]@{ name = 'Developer' } }); break }
                 '/subscriptions/bbbb/providers/Microsoft.ApiManagement/service*' { @(); break }
                 '*/subscriptions[?]*' {
                     @((New-ApimSubscription 'master' 'Built-in all-access subscription'), (New-ApimSubscription 's1' 'Client One' 'active' '/users/u1')); break }
@@ -37,16 +37,39 @@ Describe 'Discovery, inventory and Note check' {
     }
 
     It 'Given an Azure subscription without APIM When services are discovered Then it is skipped and only the APIM service is returned' {
-        $svc = @(Get-ApimServices)
+        $svc = @(Get-ApimServices -SubscriptionId 'aaaaaaaa-0000-0000-0000-000000000001')
         $svc.Count | Should -Be 1
         $svc[0].Name | Should -Be 'apim-one'
-        $svc[0].AzureSubscriptionId | Should -Be 'aaaa'
+        $svc[0].AzureSubscriptionId | Should -Be 'aaaaaaaa-0000-0000-0000-000000000001'
     }
 
-    It 'Given several Azure subscriptions When services are discovered Then every one of them is enumerated and queried' {
-        Get-ApimServices | Out-Null
-        Should -Invoke Invoke-ApimRequest -ParameterFilter { $Path -like '/subscriptions/aaaa/providers/Microsoft.ApiManagement/service*' }
-        Should -Invoke Invoke-ApimRequest -ParameterFilter { $Path -like '/subscriptions/bbbb/providers/Microsoft.ApiManagement/service*' }
+    It 'Given a valid number When the user picks Then that subscription is returned' {
+        Mock Write-Host {}
+        Mock Read-Host { '2' }
+        $subs = @([pscustomobject]@{ subscriptionId = 'a'; displayName = 'A'; state = 'Enabled' }, [pscustomobject]@{ subscriptionId = 'b'; displayName = 'B'; state = 'Enabled' })
+        (Select-AzureSubscription -Subscriptions $subs).subscriptionId | Should -Be 'b'
+    }
+
+    It 'Given an invalid answer then a valid one When the user picks Then it asks again' {
+        Mock Write-Host {}
+        $script:ans = [System.Collections.Generic.Queue[string]]::new(@('9', 'x', '1'))
+        Mock Read-Host { $script:ans.Dequeue() }
+        $subs = @([pscustomobject]@{ subscriptionId = 'a'; displayName = 'A'; state = 'Enabled' })
+        (Select-AzureSubscription -Subscriptions $subs).subscriptionId | Should -Be 'a'
+        Should -Invoke Read-Host -Times 3 -Exactly
+    }
+
+    It 'Given Q When the user picks Then null is returned' {
+        Mock Write-Host {}
+        Mock Read-Host { 'q' }
+        $subs = @([pscustomobject]@{ subscriptionId = 'a'; displayName = 'A'; state = 'Enabled' })
+        Select-AzureSubscription -Subscriptions $subs | Should -BeNullOrEmpty
+    }
+
+    It 'Given several Azure subscriptions When services are discovered Then only the target is queried' {
+        Get-ApimServices -SubscriptionId 'aaaaaaaa-0000-0000-0000-000000000001' | Out-Null
+        Should -Invoke Invoke-ApimRequest -Times 1 -Exactly -ParameterFilter { $Path -like '/subscriptions/aaaaaaaa-0000-0000-0000-000000000001/providers/Microsoft.ApiManagement/service*' }
+        Should -Invoke Invoke-ApimRequest -Times 0 -Exactly -ParameterFilter { $Path -like '/subscriptions/bbbb/providers/Microsoft.ApiManagement/service*' }
     }
 
     It 'Given an APIM service When the inventory is taken Then every design resource family is requested' {
@@ -111,7 +134,7 @@ Describe 'Discovery, inventory and Note check' {
     }
 
     It 'Given the discovery and inventory When they run Then no real Azure command is invoked' {
-        Get-ApimServices | Out-Null
+        Get-ApimServices -SubscriptionId 'bbbb' | Out-Null
         Get-ApimInventory -Service (New-TestService) | Out-Null
         Should -Invoke Invoke-AzRestMethod -Times 0 -Exactly
         Should -Invoke Connect-AzAccount -Times 0 -Exactly

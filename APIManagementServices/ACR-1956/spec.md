@@ -6,6 +6,10 @@ status-updated: 2026-11-24
 
 ## Scope
 
+**Subscription selection:** After sign-in the script lists the account's Azure subscriptions,
+the user picks one, its APIM services are processed, and the user is then asked whether to
+select another subscription or finish. Summary and exit code cover all picked subscriptions.
+
 Microsoft advisory MZK9-GH0 (APIM Classic tiers): secrets stored in APIM may have been accessed before
 the platform fix of 2026-11-19. The fix does not invalidate credentials already exposed. Potentially
 exposed: Named Values secrets, identity-provider client secrets, OpenID Connect provider client secrets,
@@ -346,3 +350,15 @@ Detail: `verification-report.md`.
 | 2026-11-24 | implemented_test | sdd-coding-testing-implementer |
 | 2026-11-24 | implemented_code | sdd-coding-implementer |
 | 2026-11-24 | implemented_done | sdd-coding-testing-tester |
+
+
+## Testing fixes
+
+Changes made while testing the script against real Azure:
+
+1. **PowerShell 7 required** – `#Requires -Version 7.0` fails in Windows PowerShell 5.1. Run with `pwsh`.
+2. **Usage message** – running without `-RotateKey` prints usage (parameters `-RotateKey`, `-OutputRoot`, `-WhatIf`, with a `-WhatIf` example) and exits with code 1 instead of throwing.
+3. **Azure sign-in** – after parameter validation, the script runs `Connect-AzAccount` (browser sign-in, `-WhatIf:$false -Confirm:$false -ErrorAction Stop`) and `Get-AzAccessToken | Out-Null`, before any other action. `-WhatIf` still needs authentication for read-only calls.
+4. **Interactive subscription picker** – replaces the temporary single-subscription restriction (used only for early testing and fully removed). New `Get-AzureSubscriptionList` and `Select-AzureSubscription` (numbered list, `Q` to finish, re-prompt on invalid input); `Get-ApimServices` takes a mandatory `-SubscriptionId`. After each subscription the user is asked whether to select another; summary and exit code are aggregated, with one report folder per run.
+5. **Empty subscription ID bug** – "No APIM services found in accessible Azure subscription ." came from an undefined variable; removed with the picker.
+6. **Tests** – updated `MainFlow`, `Inventory`, `Preflight` tests and `TestSupport` stubs (picker flow, usage exit, sign-in mocks, three `Select-AzureSubscription` tests). Test data uses neutral placeholder GUIDs. Pester 5+ is required to run them.
