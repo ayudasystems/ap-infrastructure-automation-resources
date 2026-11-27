@@ -1,0 +1,54 @@
+Connect-AzAccount
+
+$rg   = '<resource-group>'
+$name = '<apim-service-name>'
+
+$ctx = New-AzApiManagementContext -ResourceGroupName $rg -ServiceName $name
+
+Get-AzApiManagementUser -Context $ctx |
+  Where-Object Email |
+  Select-Object `
+    @{n='ApiManagementService'; e={ $name }},
+    @{n='Company';              e={ ($_.Email -split '@')[1] -split '\.' | Select-Object -First 1 }},
+    @{n='User';                 e={ "$($_.FirstName) $($_.LastName)".Trim() }},
+    @{n='EmailAddress';         e={ $_.Email }} |
+  Sort-Object Company, User |
+  Format-Table -AutoSize
+
+
+Get-AzApiManagementUser -Context $ctx |
+  Where-Object Email |
+  Select-Object `
+    @{n='ApiManagementService'; e={ $name }},
+    @{n='Company';              e={ ($_.Email -split '@')[1] -split '\.' | Select-Object -First 1 }},
+    @{n='User';                 e={ "$($_.FirstName) $($_.LastName)".Trim() }},
+    @{n='EmailAddress';         e={ $_.Email }} |
+  Sort-Object Company, User |
+  Export-Csv -Path ".\$name.csv" -NoTypeInformation
+  
+#################################################
+
+$rg   = 'ayudacloud-na-01'
+$name = 'ayudacloud-na'
+
+#################################################
+
+$rg   = 'Api-Default-North-Central-US'
+$name = 'ayudapreview'
+
+#################################################
+
+$rg   = 'Api-Default-North-Central-US'
+$name = 'ayudalabs'
+
+#################################################
+
+$rg   = 'ayudacloud-ce-01'
+$name = 'ams-apigateway-cloud-ca-01'
+
+#################################################
+
+$rg   = 'staticpreview-ce-01'
+$name = 'ams-apigateway-preview-ca-01'
+
+#################################################
