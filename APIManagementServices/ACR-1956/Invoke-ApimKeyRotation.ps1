@@ -158,7 +158,7 @@ function Invoke-ApimRequest {
             foreach ($item in @($parsed.value)) { $item }
             $link = $parsed.PSObject.Properties['nextLink']
             if ($link -and $link.Value) {
-                $next = ([string]$link.Value) -replace '^https://management\.azure\.com', ''
+                $next = ([string]$link.Value) -replace '^https://management\.azure\.com(:443)?', ''
             }
         }
         else {
